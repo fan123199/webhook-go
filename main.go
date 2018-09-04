@@ -2,15 +2,15 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"sync"
-	"log"
-	"os/exec"
-		"os"
-		"path"
-	"io/ioutil"
-		"strings"
 	"github.com/pelletier/go-toml"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"path"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -31,12 +31,12 @@ func handleWebhook(c *gin.Context) {
 	var hook Hook
 
 	log.Println("time is: ", time.Now().String())
-	if strings.Contains(c.Request.UserAgent() ,"Github"){
+	if strings.Contains(c.Request.UserAgent(), "Github") {
 		hook = &GithubWebHook{}
-		log.Println("pingtai","Github")
+		log.Println("pingtai", "Github")
 	} else {
 		hook = &GiteeWebhook{}
-		log.Println("pingtai","Gitee")
+		log.Println("pingtai", "Gitee")
 	}
 	c.Bind(&hook)
 
@@ -54,7 +54,7 @@ func handleWebhook(c *gin.Context) {
 		if project.Name == hook.getName() {
 			log.Println("is ", project.Name)
 			//全局密码与独立密码的判断
-			if   project.Password != hook.getPwd() && conf.Password != hook.getPwd() {
+			if project.Password != hook.getPwd() && conf.Password != hook.getPwd() {
 				c.JSON(http.StatusUnauthorized, gin.H{
 					"msg": "error with password not match",
 				})
@@ -62,7 +62,7 @@ func handleWebhook(c *gin.Context) {
 				return
 			}
 
-			if  Exists(path.Join(p, project.Cmd)){
+			if Exists(path.Join(p, project.Cmd)) {
 				cmd = exec.Command("bash", path.Join(p, project.Cmd))
 			} else if Exists(path.Join(project.Path, project.Cmd)) {
 				cmd = exec.Command("bash", project.Cmd)
@@ -74,10 +74,9 @@ func handleWebhook(c *gin.Context) {
 		}
 	}
 
-	if	cmd ==nil {
+	if cmd == nil {
 		cmd = exec.Command("echo", "unknown repo: "+hook.getName())
 	}
-
 
 	if curStatus == Running {
 		c.JSON(http.StatusOK, gin.H{
@@ -101,7 +100,7 @@ func Exec(cmd *exec.Cmd) {
 	var abc []byte
 	var err error
 	if abc, err = cmd.Output(); err != nil {
-		log.Println( err)
+		log.Println(err)
 		log.Println("err when exec --")
 	}
 	log.Println(string(abc))
@@ -122,7 +121,6 @@ func getConfig() {
 	}
 }
 
-
 func Exists(path string) bool {
 	_, err := os.Stat(path) //os.Stat获取文件信息
 	if err != nil {
@@ -137,9 +135,9 @@ func Exists(path string) bool {
 type Status int
 
 type Project struct {
-	Name string `toml:"name"`
-	Path string `toml:"path"`
-	Cmd  string `toml:"cmd"`
+	Name     string `toml:"name"`
+	Path     string `toml:"path"`
+	Cmd      string `toml:"cmd"`
 	Provider string `toml:"provider"`
 	Password string `toml:"pwd"`
 }
