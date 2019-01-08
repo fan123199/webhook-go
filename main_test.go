@@ -2,9 +2,8 @@ package main
 
 import (
 	"testing"
-	)
+)
 
-
-func TestGetConfig(t *testing.T){
+func TestGetConfig(t *testing.T) {
 
 }

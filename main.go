@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml"
+	"gopkg.in/go-playground/webhooks.v5/github"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -27,22 +28,49 @@ var curStatus = Free
 var lock sync.Mutex
 
 func handleWebhook(c *gin.Context) {
-
-	var hook Hook
-
+	getConfig()
+	var giteeHook *GiteeWebhook
+	var projectName string
 	log.Println("time is: ", time.Now().String())
-	if strings.Contains(c.Request.UserAgent(), "Github") {
-		hook = &GithubWebHook{}
-		log.Println("pingtai", "Github")
-	} else {
-		hook = &GiteeWebhook{}
-		log.Println("pingtai", "Gitee")
-	}
-	c.Bind(&hook)
+	log.Println(c.Request.UserAgent())
+	log.Println(c.Request.Host)
+	if strings.Contains(c.Request.UserAgent(), "GitHub") {
+		log.Println("pingtai", "GitHub")
+		hook, _ := github.New(github.Options.Secret(conf.Password))
+		payload, err := hook.Parse(c.Request, github.PushEvent)
+		if err != nil {
+			if err == github.ErrHMACVerificationFailed || err == github.ErrMissingHubSignatureHeader {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"msg": "error with password not match",
+				})
+				log.Println("stop because password error")
+			} else {
+				return
+			}
+		}
 
-	log.Println("password: ", hook.getPwd())
-	log.Println("url: ", hook.getUrl())
-	log.Println("name: ", hook.getName())
+		switch payload.(type) {
+		case github.PushPayload:
+			release := payload.(github.PushPayload)
+			projectName = release.Repository.Name
+		}
+	} else {
+		giteeHook = &GiteeWebhook{}
+		log.Println("pingtai", "Gitee")
+		err := c.Bind(&giteeHook)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		projectName = giteeHook.getName()
+		log.Println("gitee password: ", giteeHook.getPwd())
+		log.Println("gitee name: ", giteeHook.getName())
+	}
+
+	if len(projectName) == 0 {
+		log.Println("no effective project name")
+		return
+	}
 
 	p, err := os.Getwd()
 	if err != nil {
@@ -50,17 +78,8 @@ func handleWebhook(c *gin.Context) {
 	}
 	var cmd *exec.Cmd
 	for _, project := range conf.Projects {
-
-		if project.Name == hook.getName() {
+		if project.Name == projectName {
 			log.Println("is ", project.Name)
-			//全局密码与独立密码的判断
-			if project.Password != hook.getPwd() && conf.Password != hook.getPwd() {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"msg": "error with password not match",
-				})
-				log.Println("stop because password error")
-				return
-			}
 
 			if Exists(path.Join(p, project.Cmd)) {
 				cmd = exec.Command("bash", path.Join(p, project.Cmd))
@@ -75,7 +94,8 @@ func handleWebhook(c *gin.Context) {
 	}
 
 	if cmd == nil {
-		cmd = exec.Command("echo", "unknown repo: "+hook.getName())
+		cmd = exec.Command("echo", "unknown repo, please check your database.toml ")
+		return
 	}
 
 	if curStatus == Running {
@@ -153,9 +173,3 @@ const (
 	Free
 	Error
 )
-
-type Hook interface {
-	getUrl() string
-	getName() string
-	getPwd() string
-}

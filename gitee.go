@@ -1,6 +1,5 @@
 package main
 
-
 type GiteeWebhook struct {
 	HookName   string     `json:"hook_name"`
 	Password   string     `json:"password"`
@@ -13,14 +12,14 @@ type Repository struct {
 	Path       string `json:"path"`
 }
 
-func (g GiteeWebhook) getUrl() string{
+func (g GiteeWebhook) getUrl() string {
 	return g.Repository.GitHttpUrl
 }
 
-func (g GiteeWebhook) getName() string{
+func (g GiteeWebhook) getName() string {
 	return g.Repository.Path
 }
 
-func (g GiteeWebhook) getPwd() string{
+func (g GiteeWebhook) getPwd() string {
 	return g.Password
 }

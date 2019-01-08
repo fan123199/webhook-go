@@ -1,0 +1,7 @@
+pwd =  "123456"  # global password， used when project password is empty
+port = "1111"  # port for this webhook server
+[[data]]  # webhook for the project itself
+    name= "webhook-go"
+    provider= "github"
+    path= "/home/user/project/"
+    cmd= "deploy-webhook.sh"
