@@ -45,6 +45,7 @@ func handleWebhook(c *gin.Context) {
 				})
 				log.Println("stop because password error")
 			} else {
+				log.Println(err.Error())
 				return
 			}
 		}
