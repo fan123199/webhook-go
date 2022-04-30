@@ -2,6 +2,9 @@
 
 a simple webhook implementation  by golang, now support gitee and github.
 
+## Status
+
+The project is deprecated, it is hard to use.
 
 ## Usage
 
@@ -11,11 +14,8 @@ a simple webhook implementation  by golang, now support gitee and github.
 1. all it is done.
 1. every time you change database.toml(except port), it take effect next time , no necessary to restart.
 
-## Next
 
-+ a web UI for project management
-
-## idea
+## Idea
 
 The deploy script should be anywhere, and this project should be able to
 config the path of script.
